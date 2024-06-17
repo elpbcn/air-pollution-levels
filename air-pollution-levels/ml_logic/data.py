@@ -6,7 +6,7 @@ def load_data():
     '''
 
     #Location of csv file
-    csv_file = '../raw_data/air_pollution_data.csv'
+    csv_file = '../air-pollution-levels/raw_data/air_pollution_data.csv'
 
     #Loading csv file into df dataframe
     df = pd.read_csv(csv_file)
