@@ -1,0 +1,11 @@
+#preprocessing
+pandas
+
+#API
+fastapi
+uvicorn
+
+#ML
+
+#.env
+python-dotenv
