@@ -18,4 +18,9 @@ def classify_concentrations(df):
     # Classify NO2 concentrations
     df['no2_class'] = pd.cut(df['no2_concentration'], bins=no2_limits, labels=[1, 2, 3, 4, 5, 6])
 
+    # Drop the original concentration columns
+    df = df.drop(columns=['no2_concentration', 'pm10_concentration', 'pm25_concentration'])
+
+    # Determine the target class as the maximum of the three pollutant classes
+    df['target_class'] = df[['no2_class', 'pm10_class', 'pm25_class']].max(axis=1)
     return df
