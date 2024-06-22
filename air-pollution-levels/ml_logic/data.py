@@ -1,6 +1,8 @@
 import pandas as pd
 import numpy as np
 from sklearn.impute import KNNImputer
+from sklearn.preprocessing import StandardScaler, OneHotEncoder
+from sklearn.compose import ColumnTransformer
 
 def load_data():
     '''
@@ -8,7 +10,7 @@ def load_data():
     '''
 
     #Location of csv file
-    csv_file = '../air-pollution-levels/raw_data/air_pollution_data.csv'
+    csv_file = '../raw_data/air_pollution_data_upd.csv'
 
     #Loading csv file into df dataframe
     df = pd.read_csv(csv_file)
@@ -46,7 +48,8 @@ def clean_data(df):
 
 def classify_concentrations(df):
     '''
-    A function that classifies the concentrations of NO2, PM10, and PM2.5 into categories based on the European Air Quality Index (AQI) classification.
+    Classifies the concentrations of NO2, PM10, and PM2.5 into categories based on the European Air Quality Index (AQI) classification.
+    Sets the target class as the maximum of the three classified pollutant concentrations.
     '''
     # Define classification limits
     no2_limits = [0, 40, 90, 120, 230, 340, 1000]
@@ -63,11 +66,12 @@ def classify_concentrations(df):
     df['no2_class'] = pd.cut(df['no2_concentration'], bins=no2_limits, labels=[1, 2, 3, 4, 5, 6])
 
     # Determine the target class as the maximum of the three pollutant classes
-    df['target_class'] = df[['no2_class', 'pm10_class', 'pm25_class']].max(axis=1)
+    df['target_class'] = df[['pm10_class', 'pm25_class', 'no2_class']].apply(lambda row: row.max(), axis=1)
 
-    # Drop the class concentration columns
+    # Drop the intermediate class columns
     df = df.drop(columns=['pm10_class', 'no2_class', 'pm25_class'])
-
+    # Saving in a csv file as we need that to fetch information for Predictions
+    df.to_csv('../raw_data/data_lib.csv', index=False)
     return df
 
 def simplify_stations(station_type):
@@ -152,5 +156,60 @@ def impute_stations(df):
     reverse_mapping = {v: k for k, v in type_mapping.items() if pd.notna(v)}  # Reverse mapping excluding NaNs. source >> https://stackoverflow.com/questions/483666/reverse-invert-a-dictionary-mapping
 
     df['final_station_type'] = df['encoded_station_type_imputed'].round().astype(int).map(reverse_mapping).fillna(np.nan)
-    
+
     return df
+
+def encode_scale_data(df):
+
+    # Drop rows with missing values in critical columns
+    df = df.dropna(subset=['country_name', 'year', 'population','latitude', 'longitude'])
+
+    # Ensure 'target_class' is treated as a category
+    if 'target_class' in df.columns: # If is to avoid errors in data prediction)
+        df = df.copy()  # Make a copy to avoid modifying the original DataFrame slice
+        df['target_class'] = df['target_class'].astype('category')
+
+    # Convert 'year' to integer
+    df = df.copy()  # Make a copy to avoid modifying the original DataFrame slice
+    df['year'] = df['year'].astype(int)
+
+    columns_to_drop = ['pm10_concentration', 'pm25_concentration', 'no2_concentration', 'type_of_stations',
+                       'simplified_station_type', 'encoded_station_type', 'encoded_station_type_imputed']
+
+    df = df.drop(columns_to_drop, axis=1)
+    if 'city' in df.columns: # Drop city column if it exists (To avoid errors in data prediction)
+        df = df.drop('city', axis=1)
+    # Reset index to ensure it's sequential and clean
+    df = df.reset_index(drop=True)
+
+    # Define the columns for encoding and scaling
+    categorical_cols = ['who_region', 'country_name','final_station_type']
+    numeric_cols = ['population', 'latitude', 'longitude']
+
+    # Instantiate encoders and scalers
+    onehot_encoder = OneHotEncoder(drop='first', sparse_output=False)
+    scaler = StandardScaler()
+
+    # Pipeline for encoding and scaling
+    preprocessor = ColumnTransformer(
+        transformers=[
+            ('onehot', onehot_encoder, categorical_cols),
+            ('scaler', scaler, numeric_cols)
+        ],
+        remainder='passthrough'  # Keep the year and target_class unchanged
+    )
+
+    # Apply transformations
+    transformed_data = preprocessor.fit_transform(df)
+
+    # Get the feature names after one-hot encoding
+    ohe_feature_names = preprocessor.named_transformers_['onehot'].get_feature_names_out(categorical_cols)
+
+    # Construct the final DataFrame
+    if 'target_class' not in df.columns:
+        final_columns = list(ohe_feature_names) + numeric_cols + ['year']
+    else:
+        final_columns = list(ohe_feature_names) + numeric_cols + ['year'] + ['target_class']
+    df_transformed = pd.DataFrame(transformed_data , columns=final_columns)
+
+    return df_transformed
