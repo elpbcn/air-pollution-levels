@@ -8,7 +8,7 @@ def load_data():
     '''
 
     #Location of csv file
-    csv_file = '../air-pollution-levels/raw_data/air_pollution_data_upd.csv'
+    csv_file = '../airpollutionlevels/raw_data/air_pollution_data_upd.csv'
 
 
     #Loading csv file into df dataframe
