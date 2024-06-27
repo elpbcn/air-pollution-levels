@@ -23,4 +23,3 @@ def preprocess_regression():
     data = impute_stations_rf(data)
     data = encode_scale_data_rf(data)
     print("Regression preprocessing completed.")
-
