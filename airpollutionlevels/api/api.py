@@ -1,5 +1,7 @@
 from fastapi import FastAPI
+
 from airpollutionlevels.ml_logic.model import predict, predict_rf
+
 app = FastAPI()
 
 @app.get('/')
