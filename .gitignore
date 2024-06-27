@@ -2,3 +2,11 @@ airpollutionlevels/raw_data/
 .python-version
 airpollutionlevels/models/
 airpollutionlevels/ml_logic/__pycache__/
+airpollutionlevels/__pycache__/
+
+airpollutionlevels/api/__pycache__/
+
+airpollutionlevels/interface/__pycache__/
+airpollutionlevels/ml_logic/__pycache__/__init__.cpython-310.pyc
+airpollutionlevels/ml_logic/__pycache__/data.cpython-310.pyc
+airpollutionlevels/ml_logic/__pycache__/model.cpython-310.pyc
