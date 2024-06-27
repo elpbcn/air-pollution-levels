@@ -1,6 +1,7 @@
 import pandas as pd
 import numpy as np
 from sklearn.impute import KNNImputer
+
 from sklearn.preprocessing import StandardScaler, OneHotEncoder
 from sklearn.compose import ColumnTransformer
 from airpollutionlevels.config import resolve_path
@@ -61,6 +62,7 @@ def classify_concentrations(df):
     pm25_limits = [0, 10, 20, 25, 50, 75, 800]
     pm10_limits = [0, 20, 40, 50, 100, 150, 1200]
 
+
     # Classify PM10 concentrations
     df['pm10_class'] = pd.cut(df['pm10_concentration'], bins=pm10_limits, labels=[1, 2, 3, 4, 5, 6])
 
@@ -71,6 +73,7 @@ def classify_concentrations(df):
     df['no2_class'] = pd.cut(df['no2_concentration'], bins=no2_limits, labels=[1, 2, 3, 4, 5, 6])
 
     # Determine the target class as the maximum of the three pollutant classes
+
     df['target_class'] = df[['pm10_class', 'pm25_class', 'no2_class']].apply(lambda row: row.max(), axis=1)
 
     # Drop the intermediate class columns
@@ -78,6 +81,7 @@ def classify_concentrations(df):
     # Saving in a csv file as we need that to fetch information for Predictions
     csv_file = resolve_path('airpollutionlevels/raw_data/data_lib.csv')
     df.to_csv(csv_file, index=False)
+
     return df
 
 def simplify_stations(station_type):
@@ -351,3 +355,4 @@ def encode_scale_data_rf(df):
     df_transformed.to_csv(csv_file, index=False)
 
     return df_transformed
+
