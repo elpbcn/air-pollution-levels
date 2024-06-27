@@ -1,11 +1,8 @@
-#preprocessing
-pandas
-
 #API
+pandas
 fastapi
 uvicorn
-
-#ML
+joblib
 
 #.env
 python-dotenv
