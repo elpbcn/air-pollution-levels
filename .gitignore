@@ -1,2 +1,4 @@
-airpollutionlevels/models/
+airpollutionlevels/raw_data/
 .python-version
+airpollutionlevels/models/
+airpollutionlevels/ml_logic/__pycache__/

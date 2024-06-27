@@ -100,14 +100,17 @@ def predict(city, year):
     # Find the latest row for the provided city in the original dataset
     city_data = data[(data['city'] == city) & (data['year'] == data[data['city'] == city]['year'].max())].copy()
 
-     # Add a unique identifier before encoding
-    city_data.loc[:, 'unique_id'] = 0  # Set a temporary unique_id for tracking
-
     # Encode and scale the entire data
-    encoded_data = encode_scale_data(data)
+    try:
+        encoded_data = encode_scale_data(data)
+    except ValueError as e:
+        print(f"Not enough data available for '{city}'.") # Handle insufficient data
+        return None
+    # Get the unique_id for the latest city data
+    unique_id = city_data.iloc[0]['unique_id']
 
     # Locate the corresponding row in the encoded data using the unique identifier
-    encoded_city_data = encoded_data[encoded_data['unique_id'] == 0].copy()
+    encoded_city_data = encoded_data[encoded_data['unique_id'] == unique_id].copy()
 
     # Replace the year in the encoded city data with the input year
     encoded_city_data.loc[:, 'year'] = year
@@ -244,14 +247,17 @@ def predict_rf(city, year):
     # Find the latest row for the provided city in the original dataset
     city_data = data[(data['city'] == city) & (data['year'] == data[data['city'] == city]['year'].max())].copy()
 
-    # Add a unique identifier before encoding
-    city_data.loc[:, 'unique_id'] = 0  # Set a temporary unique_id for tracking
 
     # Encode and scale the entire data
+
     encoded_data = encode_scale_data_rf(data)
 
+
+    # Get the unique_id for the latest city data
+    unique_id = city_data.iloc[0]['unique_id']
+
     # Locate the corresponding row in the encoded data using the unique identifier
-    encoded_city_data = encoded_data[encoded_data['unique_id'] == 0].copy()
+    encoded_city_data = encoded_data[encoded_data['unique_id'] == unique_id].copy()
 
     # Replace the year in the encoded city data with the input year
     encoded_city_data.loc[:, 'year'] = year
