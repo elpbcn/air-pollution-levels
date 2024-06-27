@@ -18,6 +18,8 @@ def load_data():
     #Loading csv file into df dataframe
     df = pd.read_csv(csv_file)
 
+    #adding unique_id column
+    df['unique_id'] = range(len(df))
     return df
 
 def clean_data(df):
@@ -190,9 +192,6 @@ def encode_scale_data(df):
     if 'city' in df.columns:
         df = df.drop('city', axis=1)
 
-    # Add a unique identifier for tracking purposes
-    df['unique_id'] = range(len(df))
-
     # Reset index to ensure it's sequential and clean
     df = df.reset_index(drop=True)
 
@@ -306,8 +305,6 @@ def encode_scale_data_rf(df):
     # Reset index to ensure it's sequential and clean
     df = df.reset_index(drop=True)
 
-    # Add a unique identifier
-    df['unique_id'] = range(len(df))
 
     # Define the columns for encoding and scaling
     categorical_cols = ['who_region', 'country_name', 'final_station_type']
