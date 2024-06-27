@@ -1,16 +1,18 @@
-FROM tiangolo/uvicorn-gunicorn-fastapi:python3.8
+FROM python:latest
 
-# Set the working directory
-WORKDIR /airpollutionlevels/app
+WORKDIR /prod
 
-# Copy the requirements file
-COPY ./requirements.txt /airpollutionlevels/app/requirements.txt
+COPY airpollutionlevels/api airpollutionlevels/api
+COPY airpollutionlevels/ml_logic airpollutionlevels/ml_logic
+COPY airpollutionlevels/models airpollutionlevels/models
+COPY airpollutionlevels/raw_data airpollutionlevels/raw_data
+COPY airpollutionlevels/config.py airpollutionlevels/config.py
+COPY Makefile Makefile
 
-# Install the dependencies
-RUN pip install --no-cache-dir --upgrade -r /airpollutionlevels/app/requirements.txt
+COPY requirements.txt requirements.txt
+RUN pip install -r requirements.txt
 
-# Copy the application code
-COPY ./airpollutionlevels/app /airpollutionlevels/app
+COPY setup.py setup.py
+RUN pip install .
 
-# Command to run the application
-CMD ["uvicorn", "app.api:app", "--host", "0.0.0.0", "--port", "80"]
+CMD uvicorn airpollutionlevels.api.api:app --host 0.0.0.0 --port $PORT
