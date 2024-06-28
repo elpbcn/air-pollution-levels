@@ -4,10 +4,11 @@ import requests
 # Define the new API endpoint URL
 API_URL = 'https://airpollutionlevels-image-qgw4wjcfua-ew.a.run.app'
 
-st.title("AirPulse - Predicted PM2.5 Concentration Finder")
+st.title("AirPulse - your pm2.5 concentration predictor")
 
-st.markdown("""## Predicted PM2.5 Concentration for a City and Year
-Based on Machine Learning Predictions""")
+st.markdown("""## Breathe Easy: Discover your air quality with AirPulse.
+Just enter a City and Year.
+Let us do the heavy lifting!""")
 
 with st.form("city_year_form"):
     city = st.text_input("City Name")
@@ -28,7 +29,7 @@ if submitted:
         if response.status_code == 200:
             data = response.json()
             predicted_pm25 = data.get('predicted_pm25_concentration')
-            st.write(f"The predicted PM2.5 concentration for {city} in the year {year} is {predicted_pm25}.")
+            st.write(f"The predicted PM2.5 concentration for {city} in the year {year} is {predicted_pm25} µg/m³.")
         else:
             st.write("Error: Could not fetch the predicted concentration.")
     else:
