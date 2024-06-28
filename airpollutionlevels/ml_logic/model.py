@@ -33,8 +33,17 @@ def train_and_save_model():
     y = df['target_class']
 
     # Initialize the Decision Tree model with best parameters
-    dt = DecisionTreeClassifier(criterion='gini', max_depth=30, min_samples_leaf=4, min_samples_split=2, random_state=42)
-
+    dt = DecisionTreeClassifier(
+    criterion='gini',
+    max_depth=30,
+    max_features=None,
+    min_samples_leaf=1,
+    min_samples_split=2,
+    random_state=42
+    )
+    # Save the model for evaluation
+    model_evaluate_filename = os.path.join(model_dir, 'decision_tree_model_evaluation.pkl')
+    joblib.dump(dt, model_evaluate_filename)
     # Fit the model
     dt.fit(X, y)
 
@@ -54,22 +63,25 @@ def evaluate_model():
     data_path = resolve_path('airpollutionlevels/raw_data/air_pollution_data_encoded_class.csv')
     df = pd.read_csv(data_path)
     # Load the model
-    model_filename = resolve_path('airpollutionlevels/models/decision_tree_model.pkl')
+    model_filename = resolve_path('airpollutionlevels/models/decision_tree_model_evaluation.pkl')
     dt = joblib.load(model_filename)
 
     # Split the data into features (X) and target (y)
     X = df.drop(columns=['target_class' , 'unique_id'])
     y = df['target_class']
+     # Split the data into training and test sets
+    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+    dt.fit(X_train, y_train)
 
     # Make predictions
-    y_pred = dt.predict(X)
+    y_pred = dt.predict(X_test)
 
     # Print classification report
     print("Classification Report:")
-    print(classification_report(y, y_pred))
+    print(classification_report(y_test, y_pred))
 
     # Calculate and print accuracy
-    accuracy = accuracy_score(y, y_pred)
+    accuracy = accuracy_score(y_test, y_pred)
     print(f"Accuracy: {accuracy}")
 
 def predict(city, year):

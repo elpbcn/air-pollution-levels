@@ -229,6 +229,7 @@ def encode_scale_data(df):
     # Create the final DataFrame
     df_transformed = pd.DataFrame(transformed_data, columns=final_columns)
     df_transformed['target_class'] = df['target_class'].values
+    df_transformed['target_class'] = df_transformed['target_class'].astype('category')
 
     # Save the transformed data to a CSV file
     csv_file = resolve_path('airpollutionlevels/raw_data/air_pollution_data_encoded_class.csv')
@@ -355,4 +356,3 @@ def encode_scale_data_rf(df):
     df_transformed.to_csv(csv_file, index=False)
 
     return df_transformed
-
