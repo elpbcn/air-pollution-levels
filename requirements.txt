@@ -6,6 +6,7 @@ fastapi
 uvicorn
 
 #ML
+prophet
 
 #.env
 python-dotenv

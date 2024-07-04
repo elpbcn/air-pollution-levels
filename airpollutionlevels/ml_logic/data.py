@@ -356,3 +356,51 @@ def encode_scale_data_rf(df):
     df_transformed.to_csv(csv_file, index=False)
 
     return df_transformed
+
+
+def data_prep_timeseries():
+    '''
+    Load the Pollution data for the Prophet model  .
+    Prepare the data for the Prophet model.
+    Remove the columns that are not needed.
+    Remove Outliers.
+    Save the data in a new csv file.
+
+    '''
+    data = pd.read_csv(resolve_path('airpollutionlevels/raw_data/monthly_pollution_europe.csv'))
+
+    # Convert PM2.5 from kg/m³ to mg/m³
+    data['pm2p5'] = data['pm2p5'] * 1e9
+
+    # Convert 'time' column to datetime format and extract date
+    data['date'] = pd.to_datetime(data['time']).dt.date
+
+    # Drop unnecessary columns
+    data = data.drop(['year', 'month', 'time' , 'pm10'], axis=1)
+
+    # Define your threshold for outliers and African Countries
+    threshold = 200
+    lat_min, lat_max = 20, 37
+    lon_min, lon_max = -10, 30
+
+    # Remove outliers
+    cleaned_data = data[data['pm2p5'] <= threshold]
+
+    # Filter out North African data points
+    cleaned_data = cleaned_data[~((cleaned_data['latitude'] >= lat_min) & (cleaned_data['latitude'] <= lat_max) &
+                              (cleaned_data['longitude'] >= lon_min) & (cleaned_data['longitude'] <= lon_max))]
+
+    # Prepare and sort by date
+    cleaned_data = cleaned_data.set_index('date')
+    cleaned_data.index = pd.to_datetime(cleaned_data.index)
+    cleaned_data.sort_values('date', inplace=True)
+    cleaned_data.reset_index(inplace=True)
+
+    # Rename columns to match Prophet requirements
+    cleaned_data = cleaned_data.rename(columns={'date': 'ds', 'pm2p5': 'y'})
+
+    # Ensure "ds" is in datetime format
+    cleaned_data['ds'] = pd.to_datetime(cleaned_data['ds'], errors='coerce')
+
+    # Save the cleaned data
+    cleaned_data.to_csv(resolve_path('airpollutionlevels/raw_data/cleaned_europe_data.csv'), index=False)

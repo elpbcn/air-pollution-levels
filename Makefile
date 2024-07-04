@@ -52,6 +52,10 @@ predict_rf:
 	read -p 'Enter year: ' year; \
 	python3 -c "from airpollutionlevels.ml_logic.model import predict_rf; predict_rf('$${city}', int($${year}))"
 
+# Data Preparation for Time Series
+data_prep_timeseries:
+	@echo "Preparing data for time series..."
+	python3 -c "from airpollutionlevels.ml_logic.data import data_prep_timeseries; data_prep_timeseries()"
 
 # Help target to display available targets and their descriptions
 help:
@@ -64,5 +68,5 @@ help:
 	@echo "  train_and_save_model_rf:      Train and save the regression model."
 	@echo "  evaluate_model_rf:            Evaluate the regression model."
 	@echo "  predict_rf:                   Predict PM2.5 concentration using the regression model."
+	@echo "  data_prep_timeseries:         Prepare data for time series analysis."
 	@echo "  help:                         Help display."
-
