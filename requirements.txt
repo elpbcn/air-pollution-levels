@@ -5,6 +5,10 @@ scipy
 numpy
 fastapi
 uvicorn
+
+#ML
+prophet
+
 joblib
 
 #.env

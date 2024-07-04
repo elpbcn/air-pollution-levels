@@ -1,5 +1,7 @@
 import pandas as pd
+import numpy as np
 
+import matplotlib.pyplot as plt
 from airpollutionlevels.ml_logic.data import encode_scale_data, encode_scale_data_rf
 
 from scipy.stats import randint
@@ -8,6 +10,9 @@ from sklearn.ensemble import RandomForestRegressor
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.metrics import classification_report, accuracy_score , mean_absolute_error, mean_squared_error, r2_score , root_mean_squared_error
 from sklearn.model_selection import train_test_split
+from scipy.spatial import KDTree
+import requests
+from prophet import Prophet
 
 import joblib
 import os
@@ -33,8 +38,17 @@ def train_and_save_model():
     y = df['target_class']
 
     # Initialize the Decision Tree model with best parameters
-    dt = DecisionTreeClassifier(criterion='gini', max_depth=30, min_samples_leaf=4, min_samples_split=2, random_state=42)
-
+    dt = DecisionTreeClassifier(
+    criterion='gini',
+    max_depth=30,
+    max_features=None,
+    min_samples_leaf=1,
+    min_samples_split=2,
+    random_state=42
+    )
+    # Save the model for evaluation
+    model_evaluate_filename = os.path.join(model_dir, 'decision_tree_model_evaluation.pkl')
+    joblib.dump(dt, model_evaluate_filename)
     # Fit the model
     dt.fit(X, y)
 
@@ -54,22 +68,25 @@ def evaluate_model():
     data_path = resolve_path('airpollutionlevels/raw_data/air_pollution_data_encoded_class.csv')
     df = pd.read_csv(data_path)
     # Load the model
-    model_filename = resolve_path('airpollutionlevels/models/decision_tree_model.pkl')
+    model_filename = resolve_path('airpollutionlevels/models/decision_tree_model_evaluation.pkl')
     dt = joblib.load(model_filename)
 
     # Split the data into features (X) and target (y)
     X = df.drop(columns=['target_class' , 'unique_id'])
     y = df['target_class']
+     # Split the data into training and test sets
+    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+    dt.fit(X_train, y_train)
 
     # Make predictions
-    y_pred = dt.predict(X)
+    y_pred = dt.predict(X_test)
 
     # Print classification report
     print("Classification Report:")
-    print(classification_report(y, y_pred))
+    print(classification_report(y_test, y_pred))
 
     # Calculate and print accuracy
-    accuracy = accuracy_score(y, y_pred)
+    accuracy = accuracy_score(y_test, y_pred)
     print(f"Accuracy: {accuracy}")
 
 def predict(city, year):
@@ -279,3 +296,148 @@ def predict_rf(city, year):
 
     print(f"Predicted PM2.5 concentration for {city} in {year}: {predicted_pm25}")
     return predicted_pm25
+
+
+def get_coordinates_opendatasoft(city_name, country_name):
+    '''
+    Get the coordinates of a city using the OpenDataSoft API.
+    Parameters:
+    city_name (str): The name of the city.
+    country_name (str): The name of the country.
+    returns: Tuple of floats (latitude, longitude) or (None, None) if no results are found.
+    '''
+
+    base_url = "https://public.opendatasoft.com/api/records/1.0/search/"
+    params = {
+        'dataset': 'geonames-all-cities-with-a-population-500',
+        'q': f'{city_name}, {country_name}',
+        'format': 'json'
+    }
+    response = requests.get(base_url, params=params)
+
+    if response.status_code == 200:
+        data = response.json()
+        if data['nhits'] > 0:
+            record = data['records'][0]['fields']
+            lat = float(record['latitude'])
+            lon = float(record['longitude'])
+            return round(lat, 2), round(lon, 2)
+        else:
+            print(f"No results found for {city_name}, {country_name}")
+            return None, None
+    else:
+        print(f"Failed to get coordinates for {city_name}, {country_name}. Response code: {response.status_code}")
+        return None, None
+
+
+def find_nearest_coordinates(target_lat, target_lon, dataset):
+    '''
+    Find the nearest coordinates to the target coordinates in the dataset.
+    Parameters: target_lat (float): The target latitude.
+                target_lon (float): The target longitude.
+                dataset (DataFrame): The dataset containing the coordinates.
+    Returns: Tuple of floats (nearest_lat, nearest_lon) of the nearest coordinates in the dataset.
+    '''
+
+    # Create a KDTree with dataset coordinates
+    tree = KDTree(dataset[['latitude', 'longitude']])
+
+    # Query the KDTree for nearest neighbor to the target coordinates
+    dist, idx = tree.query([(target_lat, target_lon)])
+
+    # Get the nearest coordinates from the dataset
+    nearest_lat = dataset.iloc[idx[0]]['latitude']
+    nearest_lon = dataset.iloc[idx[0]]['longitude']
+
+    return nearest_lat, nearest_lon
+
+
+def forecast_pm25(city_name, country_name, future_periods):
+    '''
+    Forecast PM2.5 levels for a city using the Prophet model.
+    Parameters: city_name (str): The name of the city.
+                country_name (str): The name of the country.
+                future_periods (int): The number of future months to forecast.
+    '''
+
+    # Load the cleaned data
+    dataset = pd.read_csv(resolve_path('airpollutionlevels/raw_data/cleaned_europe_data.csv'), parse_dates=['ds'])
+
+    # Get city coordinates
+    city_latitude, city_longitude = get_coordinates_opendatasoft(city_name, country_name)
+    if city_latitude is None or city_longitude is None:
+        print(f"Could not find coordinates for {city_name}, {country_name}.")
+        return
+
+    # Find nearest coordinates in the dataset
+    nearest_lat, nearest_lon = find_nearest_coordinates(city_latitude, city_longitude, dataset)
+
+    # Filter the dataset for the nearest coordinates
+    city_data = dataset[(dataset['latitude'] == nearest_lat) & (dataset['longitude'] == nearest_lon)]
+    city_data = city_data.reset_index(drop=True)
+
+    # Ensure city_data 'ds' is in the correct format
+    city_data['ds'] = pd.to_datetime(city_data['ds']).dt.tz_localize(None)
+
+    if city_data.empty:
+        print(f"No data available for the nearest coordinates to {city_name}, {country_name}.")
+        return
+
+    # Prepare training data
+    train_data = city_data[['ds', 'y', 'latitude', 'longitude']]
+
+    # Initialize and train Prophet model with best parameters
+    best_params = {'changepoint_prior_scale': 0.01, 'holidays_prior_scale': 1.0, 'interval_width': 0.5, 'seasonality_mode': 'multiplicative', 'seasonality_prior_scale': 10.0}
+    model = Prophet(**best_params)
+    model.add_regressor('latitude')
+    model.add_regressor('longitude')
+    model.fit(train_data)
+
+    # Forecast future PM2.5 levels
+    future_dates = model.make_future_dataframe(periods=future_periods, freq='M')
+    future_dates['latitude'] = nearest_lat
+    future_dates['longitude'] = nearest_lon
+    forecast = model.predict(future_dates)
+
+    # Ensure forecast 'ds' is in the correct format
+    forecast['ds'] = pd.to_datetime(forecast['ds']).dt.tz_localize(None)
+
+    # Extract the trend component
+    trend = forecast[['ds', 'trend']]
+
+    # Calculate mean of yhat_lower and yhat_upper for the forecast period
+    mean_yhat_lower = forecast['yhat_lower'].mean()
+    mean_yhat_upper = forecast['yhat_upper'].mean()
+
+    # Add text description
+    text_description = f"For the next {future_periods} months, the PM2.5 levels are forecasted to be between {mean_yhat_lower:.2f} and {mean_yhat_upper:.2f} µg/m³ on average."
+
+    # Plot the forecast and actual values
+    plt.figure(figsize=(14, 6))
+    plt.text(0.5, 1.1, text_description, ha='center', va='center', transform=plt.gca().transAxes, fontsize=12, bbox=dict(facecolor='lightgrey', alpha=0.5))
+    plt.plot(city_data['ds'], city_data['y'], label='Actual', color='blue')
+    plt.plot(forecast['ds'], forecast['yhat'], label='Forecast', linestyle='--', color='red')
+    plt.fill_between(forecast['ds'], forecast['yhat_lower'], forecast['yhat_upper'], label='Uncertainty Range', color='lightgreen', alpha=0.3)
+    plt.xlabel('Date')
+    plt.ylabel('PM2.5 (µg/m³)')
+    plt.title(f'Actual vs. Forecasted PM2.5 Levels for {city_name}, {country_name}')
+    plt.legend()
+    plt.grid(True)
+    plt.show()
+
+    # Plot the trend component
+    plt.figure(figsize=(14, 6))
+    plt.plot(trend['ds'], trend['trend'], label='Trend', color='lightblue')
+    plt.xlabel('Date')
+    plt.ylabel('Trend Value')
+    plt.title(f'Trend of PM2.5 Levels for {city_name}, {country_name}')
+    plt.legend()
+    plt.grid(True)
+    plt.show()
+
+    # Add latitude and longitude columns to forecast DataFrame
+    forecast['latitude'] = nearest_lat
+    forecast['longitude'] = nearest_lon
+
+    # Return forecast DataFrame
+    #return forecast[['ds', 'yhat', 'yhat_lower', 'yhat_upper', 'latitude', 'longitude']].tail(future_periods) # no need at the moment
