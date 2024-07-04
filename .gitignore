@@ -4,3 +4,6 @@ airpollutionlevels/models/
 airpollutionlevels/ml_logic/__pycache__/
 __pycache__/
 .ipynb_checkpoints/
+airpollutionlevels/__pycache__/
+airpollutionlevels/api/__pycache__/
+airpollutionlevels/interface/__pycache__/

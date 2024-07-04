@@ -1,12 +1,15 @@
-#preprocessing
-pandas
-
 #API
+pandas
+scikit-learn==1.4.2
+scipy
+numpy
 fastapi
 uvicorn
 
 #ML
 prophet
+
+joblib
 
 #.env
 python-dotenv
