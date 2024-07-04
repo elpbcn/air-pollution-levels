@@ -2,10 +2,12 @@
 pandas
 scikit-learn==1.4.2
 scipy
-numpy
+numpy==1.26.4
+docplex==2.27.239
 fastapi
 uvicorn
-
+requests
+IPython
 #ML
 prophet
 
