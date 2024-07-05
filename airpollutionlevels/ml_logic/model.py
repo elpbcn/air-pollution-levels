@@ -366,7 +366,7 @@ def forecast_pm25(city_name, country_name, future_periods):
         future_periods (int): The number of future months to forecast.
     '''
     # Load the cleaned data
-    dataset = pd.read_csv('airpollutionlevels/raw_data/cleaned_europe_data.csv', parse_dates=['ds'])
+    dataset = pd.read_csv(resolve_path('airpollutionlevels/raw_data/cleaned_europe_data.csv'), parse_dates=['ds'])
 
     # Get city coordinates
     city_latitude, city_longitude = get_coordinates_opendatasoft(city_name, country_name)
