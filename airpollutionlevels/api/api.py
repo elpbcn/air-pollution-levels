@@ -2,6 +2,7 @@ from fastapi import FastAPI, HTTPException
 from airpollutionlevels.ml_logic.model import *
 from airpollutionlevels.ml_logic.map_graphics import display_gif
 from fastapi.responses import StreamingResponse
+from fastapi.responses import JSONResponse
 from PIL import Image
 from io import BytesIO
 import io
@@ -26,6 +27,28 @@ def get_forecast_pm25(city_name: str, country_name: str, future_periods: int):
             raise HTTPException(status_code=404, detail="Plot image could not be generated.")
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"An error occurred: {str(e)}")
+
+@app.get("/forecast_pm25_data")
+def get_forecast_pm25_data(city_name: str, country_name: str, future_periods: int):
+        city_data, forecast, trend, yhat_lower_mean, yhat_upper_mean, yhat_mean = forecast_pm25_data (city_name, country_name, future_periods)
+        city_data = city_data.to_dict(orient='records')
+        forecast = forecast.to_dict(orient='records')
+        trend = trend.to_dict(orient='records')
+
+        data = {
+            "city_data": city_data,
+            "forecast": forecast,
+            "trend": trend,
+            "yhat_lower_mean": float(yhat_lower_mean),
+            "yhat_upper_mean": float(yhat_upper_mean),
+            "yhat_mean": float(yhat_mean)
+            }
+
+        return data
+
+
+
+
 
 
 # Endpoint to display a GIF file
