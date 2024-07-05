@@ -20,3 +20,7 @@ def resolve_path(relative_path):
     Resolves a relative path to an absolute path based on the project root.
     """
     return get_project_root() / relative_path
+
+
+
+
