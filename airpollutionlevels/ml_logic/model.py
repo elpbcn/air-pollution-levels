@@ -14,6 +14,9 @@ from scipy.spatial import KDTree
 import requests
 from prophet import Prophet
 
+from io import BytesIO
+import base64
+
 import joblib
 import os
 from airpollutionlevels.config import resolve_path
@@ -299,13 +302,15 @@ def predict_rf(city, year):
 
 
 def get_coordinates_opendatasoft(city_name, country_name):
-    '''
-    Get the coordinates of a city using the OpenDataSoft API.
-    Parameters:
-    city_name (str): The name of the city.
-    country_name (str): The name of the country.
-    returns: Tuple of floats (latitude, longitude) or (None, None) if no results are found.
-    '''
+    # Validate inputs
+    if not city_name or not country_name:
+        print("City name and country name are required.")
+        return None, None
+
+    # Further validation logic if needed (e.g., minimum length)
+    if len(city_name) < 3 or len(country_name) < 2:
+        print("City name and country name should have minimum lengths.")
+        return None, None
 
     base_url = "https://public.opendatasoft.com/api/records/1.0/search/"
     params = {
@@ -355,33 +360,27 @@ def find_nearest_coordinates(target_lat, target_lon, dataset):
 def forecast_pm25(city_name, country_name, future_periods):
     '''
     Forecast PM2.5 levels for a city using the Prophet model.
-    Parameters: city_name (str): The name of the city.
-                country_name (str): The name of the country.
-                future_periods (int): The number of future months to forecast.
+    Parameters:
+        city_name (str): The name of the city.
+        country_name (str): The name of the country.
+        future_periods (int): The number of future months to forecast.
     '''
-
     # Load the cleaned data
     dataset = pd.read_csv(resolve_path('airpollutionlevels/raw_data/cleaned_europe_data.csv'), parse_dates=['ds'])
 
     # Get city coordinates
     city_latitude, city_longitude = get_coordinates_opendatasoft(city_name, country_name)
     if city_latitude is None or city_longitude is None:
-        print(f"Could not find coordinates for {city_name}, {country_name}.")
-        return
+        return None, f"Could not find coordinates for {city_name}, {country_name}."
 
     # Find nearest coordinates in the dataset
     nearest_lat, nearest_lon = find_nearest_coordinates(city_latitude, city_longitude, dataset)
 
     # Filter the dataset for the nearest coordinates
-    city_data = dataset[(dataset['latitude'] == nearest_lat) & (dataset['longitude'] == nearest_lon)]
-    city_data = city_data.reset_index(drop=True)
-
-    # Ensure city_data 'ds' is in the correct format
-    city_data['ds'] = pd.to_datetime(city_data['ds']).dt.tz_localize(None)
+    city_data = dataset[(dataset['latitude'] == nearest_lat) & (dataset['longitude'] == nearest_lon)].reset_index(drop=True)
 
     if city_data.empty:
-        print(f"No data available for the nearest coordinates to {city_name}, {country_name}.")
-        return
+        return None, f"No data available for the nearest coordinates to {city_name}, {country_name}."
 
     # Prepare training data
     train_data = city_data[['ds', 'y', 'latitude', 'longitude']]
@@ -399,45 +398,46 @@ def forecast_pm25(city_name, country_name, future_periods):
     future_dates['longitude'] = nearest_lon
     forecast = model.predict(future_dates)
 
-    # Ensure forecast 'ds' is in the correct format
-    forecast['ds'] = pd.to_datetime(forecast['ds']).dt.tz_localize(None)
+    # Calculate mean values for the forecast period
+    yhat_mean = forecast['yhat'][-future_periods:].mean()
+    yhat_lower_mean = forecast['yhat_lower'][-future_periods:].mean()
+    yhat_upper_mean = forecast['yhat_upper'][-future_periods:].mean()
 
     # Extract the trend component
     trend = forecast[['ds', 'trend']]
 
-    # Calculate mean of yhat_lower and yhat_upper for the forecast period
-    mean_yhat_lower = forecast['yhat_lower'].mean()
-    mean_yhat_upper = forecast['yhat_upper'].mean()
-
-    # Add text description
-    text_description = f"For the next {future_periods} months, the PM2.5 levels are forecasted to be between {mean_yhat_lower:.2f} and {mean_yhat_upper:.2f} µg/m³ on average."
-
     # Plot the forecast and actual values
-    plt.figure(figsize=(14, 6))
-    plt.text(0.5, 1.1, text_description, ha='center', va='center', transform=plt.gca().transAxes, fontsize=12, bbox=dict(facecolor='lightgrey', alpha=0.5))
-    plt.plot(city_data['ds'], city_data['y'], label='Actual', color='blue')
-    plt.plot(forecast['ds'], forecast['yhat'], label='Forecast', linestyle='--', color='red')
-    plt.fill_between(forecast['ds'], forecast['yhat_lower'], forecast['yhat_upper'], label='Uncertainty Range', color='lightgreen', alpha=0.3)
-    plt.xlabel('Date')
-    plt.ylabel('PM2.5 (µg/m³)')
-    plt.title(f'Actual vs. Forecasted PM2.5 Levels for {city_name}, {country_name}')
-    plt.legend()
-    plt.grid(True)
-    plt.show()
+    fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(14, 12))
 
-    # Plot the trend component
-    plt.figure(figsize=(14, 6))
-    plt.plot(trend['ds'], trend['trend'], label='Trend', color='lightblue')
-    plt.xlabel('Date')
-    plt.ylabel('Trend Value')
-    plt.title(f'Trend of PM2.5 Levels for {city_name}, {country_name}')
-    plt.legend()
-    plt.grid(True)
-    plt.show()
+    # Plot 1: Actual vs. Forecasted PM2.5 Levels
+    ax1.plot(city_data['ds'], city_data['y'], label='Actual', color='blue')
+    ax1.plot(forecast['ds'], forecast['yhat'], label='Forecast', linestyle='--', color='red')
+    ax1.fill_between(forecast['ds'], forecast['yhat_lower'], forecast['yhat_upper'], label='Uncertainty Range', color='lightgreen', alpha=0.3)
+    ax1.set_xlabel('Date')
+    ax1.set_ylabel('PM2.5 (µg/m³)')
+    ax1.set_title(f'Actual vs. Forecasted PM2.5 Levels for {city_name}, {country_name}')
+    ax1.legend()
+    ax1.grid(True)
 
-    # Add latitude and longitude columns to forecast DataFrame
-    forecast['latitude'] = nearest_lat
-    forecast['longitude'] = nearest_lon
+    # Plot 2: Trend of PM2.5 Levels
+    ax2.plot(trend['ds'], trend['trend'], label='Trend', color='lightblue')
+    ax2.set_xlabel('Date')
+    ax2.set_ylabel('Trend Value')
+    ax2.set_title(f'Trend of PM2.5 Levels for {city_name}, {country_name}')
+    ax2.legend()
+    ax2.grid(True)
 
-    # Return forecast DataFrame
-    #return forecast[['ds', 'yhat', 'yhat_lower', 'yhat_upper', 'latitude', 'longitude']].tail(future_periods) # no need at the moment
+    # Generate a summary text
+    summary_text = (f"For the next {future_periods} months, the forecasted PM2.5 levels range from "
+          f"{yhat_lower_mean:.2f} to {yhat_upper_mean:.2f} µg/m³ with an average prediction of {yhat_mean:.2f} µg/m³.")
+
+    # Save plot to a BytesIO object
+    buffer = BytesIO()
+    plt.savefig(buffer, format='png')
+    buffer.seek(0)
+
+    # Encode plot image as base64 string
+    encoded_image = base64.b64encode(buffer.getvalue()).decode()
+    buffer.close()
+
+    return encoded_image, summary_text
