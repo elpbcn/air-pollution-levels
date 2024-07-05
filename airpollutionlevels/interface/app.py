@@ -69,19 +69,28 @@ def main():
         st.subheader('Europe Forecasts')
 
         # Specify the path to your local GIF file
-        local_gif_path = resolve_path('airpollutionlevels/raw_data/animation.gif')
+        #local_gif_path = resolve_path('airpollutionlevels/raw_data/animation.gif')
 
-        gif_content_local = fetch_gif_local(local_gif_path)
-        if gif_content_local:
-            try:
-                st.markdown(
-                    f'<img src="data:image/gif;base64,{base64.b64encode(gif_content_local).decode("utf-8")}" alt="Local GIF">',
-                    unsafe_allow_html=True
-                )
-            except Exception as e:
-                st.error(f"Error displaying local GIF: {str(e)}")
-        else:
-            st.error("Failed to fetch or display local GIF.")
+        # gif_content_local = fetch_gif_local(local_gif_path)
+        # if gif_content_local:
+        #     try:
+        #         st.markdown(
+        #             f'<img src="data:image/gif;base64,{base64.b64encode(gif_content_local).decode("utf-8")}" alt="Local GIF">',
+        #             unsafe_allow_html=True
+        #         )
+        #     except Exception as e:
+        #         st.error(f"Error displaying local GIF: {str(e)}")
+        # else:
+        #     st.error("Failed to fetch or display local GIF.")
+
+        url = f"{BASE_URL}/display_gif"
+
+        response = requests.get(url)
+        data = response.json()
+        st.markdown(
+            f'<img src="data:image/gif;base64,{base64.b64encode(response).decode("utf-8")}" alt="Deployed GIF">',
+           unsafe_allow_html=True
+        )
 
 if __name__ == '__main__':
     main()
