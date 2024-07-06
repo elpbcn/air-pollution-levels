@@ -4,6 +4,13 @@ import pandas as pd
 from PIL import Image
 from io import BytesIO
 import matplotlib.pyplot as plt
+from matplotlib.dates import DateFormatter
+import matplotlib.dates as mdates
+import pickle
+import folium
+from folium.plugins import HeatMapWithTime
+from streamlit_folium import folium_static
+from st_files_connection import FilesConnection
 import base64
 
 BASE_URL = 'http://localhost:8000'  # Update with your FastAPI container IP if necessary
@@ -54,7 +61,7 @@ def main():
 
     # Sidebar menu
     st.sidebar.title('Menu')
-    menu_option = st.sidebar.radio('Select Option', ['Forecast PM2.5 Levels', 'Europe Forecasts'])
+    menu_option = st.sidebar.radio('Select Option', ['Forecast PM2.5 Levels', 'Europe Forecasts', 'Europe Forecasts Interactive'])
 
     if menu_option == 'Forecast PM2.5 Levels':
         st.subheader('Forecast PM2.5 Levels')
@@ -70,13 +77,22 @@ def main():
             data = fetch_forecast_pm25_data(city_name, country_name, future_periods)
 
             city_data = pd.json_normalize(data['city_data'])
+            city_data['ds'] = pd.to_datetime(city_data['ds'])
             forecast = pd.json_normalize(data['forecast'])
+            forecast['ds'] = pd.to_datetime(forecast['ds'])
             trend = pd.json_normalize(data['trend'])
+            trend['ds'] = pd.to_datetime(trend['ds'])
+
 
             yhat_lower_mean = data['yhat_lower_mean']
             yhat_upper_mean = data['yhat_upper_mean']
             yhat_mean = data['yhat_mean']
 
+            # Generate a summary text
+            summary_text = (f"For the next {future_periods} months, the forecasted PM2.5 levels range from "
+                            f"{yhat_lower_mean:.2f} to {yhat_upper_mean:.2f} µg/m³ with an average prediction of {yhat_mean:.2f} µg/m³.")
+
+            st.markdown(summary_text)
             # Plot the forecast and actual values
             fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(14, 12))
 
@@ -100,11 +116,7 @@ def main():
 
             figures = st.pyplot(fig)
 
-            # Generate a summary text
-            summary_text = (f"For the next {future_periods} months, the forecasted PM2.5 levels range from "
-                            f"{yhat_lower_mean:.2f} to {yhat_upper_mean:.2f} µg/m³ with an average prediction of {yhat_mean:.2f} µg/m³.")
 
-            st.markdown(summary_text)
 
 
 
@@ -151,12 +163,77 @@ def main():
 
         url = f"{BASE_URL}/display_gif"
 
-        response = requests.get(url)
-        data = response.json()
+        image = conn.read("air-pollution-levels-elpbcn/animation.gif", input_format="gif", ttl=600)
         st.markdown(
-            f'<img src="data:image/gif;base64,{base64.b64encode(response).decode("utf-8")}" alt="Deployed GIF">',
+            f'<img src="data:image/gif;base64,{base64.b64encode(image).decode("utf-8")}" alt="Deployed GIF">',
            unsafe_allow_html=True
         )
+
+    elif menu_option == 'Europe Forecast Interactive':
+        st.subheader('Europe Forecasts Interactive')
+
+        # loading from bucket
+        conn = st.connection('gcs', type=FilesConnection)
+        heat_data = conn.read("air-pollution-levels-elpbcn/heat_data.txt", input_format="txt", ttl=600)
+
+        time_index = conn.read("air-pollution-levels-elpbcn/time_index.txt", input_format="txt", ttl=600)
+
+        # Create a base map
+        m = folium.Map(location=[54.5260, 15.2551], zoom_start=5)
+
+        # Add HeatMapWithTime layer
+        HeatMapWithTime(
+            data=heat_data,
+            index=time_index,
+            gradient={0.167: '#36ac56', 0.333: '#9bd445', 0.5: '#f1d208', 0.667: '#ffbb02', 0.833: '#ff8b00', 1.0: '#ed0e06'},  # Adjust gradient colors as needed: gradient={0.167: '#36ac56', 0.333: '#9bd445', 0.5: '#f1d208', 0.667: '#ffbb02', 0.833: '#ff8b00', 1.0: '#ed0e06'}
+            radius=0.75,
+            # min_opacity=0.1,
+            # max_opacity=0.3,
+            scale_radius=True,
+            # auto_play=False,
+            # max_speed=10,
+            # speed_step=0.1,
+            # position='bottomleft'
+        ).add_to(m)
+
+        # Display map in Streamlit
+        folium_static(m)
+
+        # Add legend below the map
+        st.markdown("""
+        <style>
+        .legend {
+            position: relative;
+            bottom: 0;
+            width: 100%;
+            display: flex;
+            justify-content: space-around;
+            padding: 10px;
+            background: white;
+            border: 2px solid grey;
+            border-radius: 5px;
+        }
+        .legend div {
+            display: flex;
+            align-items: center;
+        }
+        .legend div span {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            margin-right: 5px;
+        }
+        </style>
+        <div class="legend">
+        <div><span style="background: #36ac56"></span>1</div>
+        <div><span style="background: #9bd445"></span>2</div>
+        <div><span style="background: #f1d208"></span>3</div>
+        <div><span style="background: #ffbb02"></span>4</div>
+        <div><span style="background: #ff8b00"></span>5</div>
+        <div><span style="background: #ed0e06"></span>6</div>
+        </div>
+        """, unsafe_allow_html=True)
+
 
 if __name__ == '__main__':
     main()

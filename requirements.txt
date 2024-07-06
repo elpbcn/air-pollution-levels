@@ -22,3 +22,6 @@ plotly-resampler==0.10.0
 
 # .env file handling
 python-dotenv==1.0.1
+gcsfs
+st-files-connection
+folium
