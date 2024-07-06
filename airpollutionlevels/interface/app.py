@@ -5,7 +5,8 @@ from io import BytesIO
 import base64
 from airpollutionlevels.config import resolve_path
 
-BASE_URL = 'http://localhost:8000'  # Update with your FastAPI container IP if necessary
+BASE_URL = 'https://airpollutionlevels-image-qgw4wjcfua-ew.a.run.app'  # Update with your FastAPI container IP if necessary
+
 
 def fetch_forecast_pm25(city_name, country_name, future_periods):
     try:
