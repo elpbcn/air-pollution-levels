@@ -3,7 +3,7 @@ import requests
 from PIL import Image
 from io import BytesIO
 import base64
-from airpollutionlevels.config import resolve_path
+
 
 BASE_URL = 'https://airpollutionlevels-image-qgw4wjcfua-ew.a.run.app'  # Update with your FastAPI container IP if necessary
 
