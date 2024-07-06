@@ -441,3 +441,57 @@ def forecast_pm25(city_name, country_name, future_periods):
     buffer.close()
 
     return encoded_image, summary_text
+
+
+####TRYING TO PROVIDE DATA; NOT PLOTS
+
+def forecast_pm25_data(city_name, country_name, future_periods):
+    '''
+    Forecast PM2.5 levels for a city using the Prophet model.
+    Parameters:
+        city_name (str): The name of the city.
+        country_name (str): The name of the country.
+        future_periods (int): The number of future months to forecast.
+    '''
+    # Load the cleaned data
+    dataset = pd.read_csv(resolve_path('airpollutionlevels/raw_data/cleaned_europe_data.csv'), parse_dates=['ds'])
+
+    # Get city coordinates
+    city_latitude, city_longitude = get_coordinates_opendatasoft(city_name, country_name)
+    if city_latitude is None or city_longitude is None:
+        return None, f"Could not find coordinates for {city_name}, {country_name}."
+
+    # Find nearest coordinates in the dataset
+    nearest_lat, nearest_lon = find_nearest_coordinates(city_latitude, city_longitude, dataset)
+
+    # Filter the dataset for the nearest coordinates
+    city_data = dataset[(dataset['latitude'] == nearest_lat) & (dataset['longitude'] == nearest_lon)].reset_index(drop=True)
+
+    if city_data.empty:
+        return None, f"No data available for the nearest coordinates to {city_name}, {country_name}."
+
+    # Prepare training data
+    train_data = city_data[['ds', 'y', 'latitude', 'longitude']]
+
+    # Initialize and train Prophet model with best parameters
+    best_params = {'changepoint_prior_scale': 0.01, 'holidays_prior_scale': 1.0, 'interval_width': 0.5, 'seasonality_mode': 'multiplicative', 'seasonality_prior_scale': 10.0}
+    model = Prophet(**best_params)
+    model.add_regressor('latitude')
+    model.add_regressor('longitude')
+    model.fit(train_data)
+
+    # Forecast future PM2.5 levels
+    future_dates = model.make_future_dataframe(periods=future_periods, freq='M')
+    future_dates['latitude'] = nearest_lat
+    future_dates['longitude'] = nearest_lon
+    forecast = model.predict(future_dates)
+
+    # Calculate mean values for the forecast period
+    yhat_mean = forecast['yhat'][-future_periods:].mean()
+    yhat_lower_mean = forecast['yhat_lower'][-future_periods:].mean()
+    yhat_upper_mean = forecast['yhat_upper'][-future_periods:].mean()
+
+    # Extract the trend component
+    trend = forecast[['ds', 'trend']]
+
+    return city_data, forecast, trend, yhat_lower_mean, yhat_upper_mean, yhat_mean
