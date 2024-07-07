@@ -4,6 +4,7 @@ from PIL import Image
 from io import BytesIO
 import base64
 import folium
+import streamlit_folium
 from folium.plugins import HeatMapWithTime
 from streamlit_folium import folium_static
 from scipy.spatial import KDTree
