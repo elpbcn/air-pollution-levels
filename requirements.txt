@@ -20,6 +20,7 @@ streamlit==1.36.0
 ipython==8.25.0
 plotly==5.22.0
 plotly-resampler==0.10.0
+folium
 
 # .env file handling
 python-dotenv==1.0.1
