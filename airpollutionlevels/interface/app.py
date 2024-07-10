@@ -11,10 +11,10 @@ from scipy.spatial import KDTree
 import pandas as pd
 import requests
 import pickle
+from streamlit_navigation_bar import st_navbar
 
-
-BASE_URL = 'https://airpollutionlevels-image-qgw4wjcfua-ew.a.run.app'  # Update with your FastAPI container IP if necessary
-
+#BASE_URL = 'https://airpollutionlevels-image-qgw4wjcfua-ew.a.run.app'
+BASE_URL = 'http://localhost:8000'
 
 def fetch_forecast_pm25(city_name, country_name, future_periods):
     try:
@@ -87,22 +87,41 @@ def user_city_latlon1(user_city, user_country, df):
     nearest_lat, nearest_lon = find_nearest_coordinates1(targetlat, targetlon, df)
     return nearest_lat, nearest_lon
 
+
+
 def main():
-    st.title('Air Pollution Forecast')
+    # Display navigation bar
+    page = st_navbar(["Forecast PM2.5", "Europe map", "Pm2.5 Heatmap", "Europe Heatmap", "About"])
 
-    # Sidebar menu
-    st.sidebar.title('Menu')
-    menu_option = st.sidebar.radio('Select Option', ['Forecast PM2.5 Levels', 'Europe Forecasts', 'PM2.5 Heatmap', 'Europe Heatmap'])
 
-    if menu_option == 'Forecast PM2.5 Levels':
-        st.subheader('Forecast PM2.5 Levels')
+    # Load and display logo
+    logo = 'apl_logo.png'
+    st.image(logo, width=700)
+    st.markdown("---")
 
-        # Input fields
-        city_name = st.text_input('Enter City Name', 'City')
-        country_name = st.text_input('Enter Country Name', 'Country')
-        future_periods = st.number_input('Enter Future Periods (months)', min_value=1, max_value=120, value=6)
+    # Sidebar inputs
+    with st.sidebar:
+        if page == "Forecast PM2.5":
+            st.subheader('Input Parameters')
+            # Input fields
+            city_name = st.text_input('Enter City Name', 'City')
+            country_name = st.text_input('Enter Country Name', 'Country')
+            future_periods = st.number_input('Enter Future Periods (months)', min_value=1, max_value=120, value=6)
+            show_forecast = st.button('Show Forecast')
 
-        if st.button('Show Forecast'):
+
+        elif page == "Pm2.5 Heatmap":
+            st.subheader('Input Parameters')
+            # Input fields
+            city_name = st.text_input('Enter City Name', 'City')
+            country_name = st.text_input('Enter Country Name', 'Country')
+            show_heatmap = st.button('Show HeatMap')
+
+    if page == "Forecast PM2.5":
+
+
+
+        if show_forecast:
             plot_image, summary_text = fetch_forecast_pm25(city_name, country_name, future_periods)
             if plot_image and summary_text:
                 # Display text description
@@ -116,8 +135,8 @@ def main():
             else:
                 st.error("Failed to fetch or display forecast.")
 
-    elif menu_option == 'Europe Forecasts':
-        st.subheader('Europe Forecasts')
+    elif page == "Europe map":
+        
         st.markdown("![Alt Text](https://airpollutionlevels-image-qgw4wjcfua-ew.a.run.app/display_gif)")
         # # Specify the path to your local GIF file
         # local_gif_path = resolve_path('airpollutionlevels/raw_data/animation.gif')
@@ -134,8 +153,8 @@ def main():
         # else:
         #     st.error("Failed to fetch or display local GIF.")
 
-    elif menu_option == 'PM2.5 Heatmap':
-        st.subheader('PM2.5 Heatmap')
+    elif page == "Pm2.5 Heatmap":
+
 
         df = pd.read_csv("https://raw.githubusercontent.com/elpbcn/air-pollution-levels/master/airpollutionlevels/interface/predicts.csv") #replace with file path to raw data folder where predicts is saved
 
@@ -148,11 +167,9 @@ def main():
         # calculate a weight
         df['weight'] = df['weight']/6
 
-        # Input fields
-        city_name = st.text_input('Enter City Name', 'City')
-        country_name = st.text_input('Enter Country Name', 'Country')
 
-        if st.button('Show HeatMap'):
+
+        if show_heatmap:
 
             # Get latitude and longitude for user's city
             user_city = city_name
@@ -221,8 +238,8 @@ def main():
             </div>
             """, unsafe_allow_html=True)
 
-    elif menu_option == 'Europe Heatmap':
-        st.subheader('Europe Heatmap')
+    elif page == "Europe Heatmap":
+
 
         # loading from file
 
@@ -297,6 +314,42 @@ def main():
             <div><span style="background: #ed0e06"></span>6</div>
         </div>
         """, unsafe_allow_html=True)
+
+    elif page == "About":
+        st.subheader('About the Project')
+        st.markdown("""
+        **Project Title:** Air Pollution Levels Forecast and Visualization
+
+        **Objective:**
+        This project aims to provide forecasts and visualizations of PM2.5 levels in various cities and regions across Europe. PM2.5 refers to fine particulate matter with a diameter of 2.5 micrometers or smaller, which can pose serious health risks when inhaled. By providing accurate forecasts and visual representations, we hope to inform and protect public health.
+
+        **Key Features:**
+        - **Forecast PM2.5 Levels:** Users can enter a city and country to receive a forecast of PM2.5 levels for up to 10 years into the future.
+        - **Heatmaps:** Visualize current and forecasted PM2.5 levels across Europe with interactive heatmaps, allowing users to see trends and patterns.
+
+
+        **Technology Stack:**
+        - **Data Processing and Analysis:** Python, Pandas, NumPy
+        - **Forecasting:** Prophet, a forecasting tool developed by Facebook
+        - **Visualization:** Folium, Matplotlib, Streamlit for web interface
+        - **Data Sources:** https://atmosphere.copernicus.eu/ads-now-contains-20-year-cams-global-reanalysis-eac4-dataset
+
+        **Team Members:**
+        - Eva López Puiggené
+        - Dimitrios Apatzidis
+        - Ilaria Gaiani
+        - Tawanda Sigauke
+        - Bruce Pereira
+
+
+        **Acknowledgements:**
+        We would like to thank our mentors and instructors at the Data Science Bootcamp for their guidance and support throughout this project.
+
+        **Future Work:**
+        - **Integration of Real-time Data:** Incorporating real-time air quality monitoring data to provide up-to-date forecasts.
+        - **Exploring daily data:** Exploring the performance of the model with daily data .
+        - **User Interface Enhancements:** Adding more interactive features and customization options for users.
+        """)
 
 if __name__ == '__main__':
     main()
