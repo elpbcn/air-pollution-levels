@@ -98,7 +98,9 @@ def main():
     #logo = 'https://github.com/elpbcn/air-pollution-levels/blob/master/airpollutionlevels/interface/apl_logo.png'
     #st.image(logo, width=700)
     #st.markdown("---")
-    st.markdown("![Alt Text](https://github.com/elpbcn/air-pollution-levels/blob/master/airpollutionlevels/interface/apl_logo.png)")
+    htp="https://raw.githubusercontent.com/elpbcn/air-pollution-levels/blob/master/airpollutionlevels/interface/apl_logo.png" 
+    st.image(htp, caption= 'logo', width=700)
+    
 
     # Sidebar inputs
     with st.sidebar:
