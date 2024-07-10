@@ -137,8 +137,7 @@ def main():
             else:
                 st.error("Failed to fetch or display forecast.")
 
-    elif page == "Europe map":
-
+    
     elif page == "Europe map":
 
         st.markdown("![Alt Text](https://airpollutionlevels-image-qgw4wjcfua-ew.a.run.app/display_gif)")
@@ -329,77 +328,5 @@ def main():
         - **User Interface Enhancements:** Adding more interactive features and customization options for users.
         """)
 
-    elif page == "About":
-        st.subheader('About the Project')
-        st.markdown("""
-        **Project Title:** Air Pollution Levels Forecast and Visualization
-
-        **Objective:**
-        This project aims to provide forecasts and visualizations of PM2.5 levels in various cities and regions across Europe. PM2.5 refers to fine particulate matter with a diameter of 2.5 micrometers or smaller, which can pose serious health risks when inhaled. By providing accurate forecasts and visual representations, we hope to inform and protect public health.
-
-        **Key Features:**
-        - **Forecast PM2.5 Levels:** Users can enter a city and country to receive a forecast of PM2.5 levels for up to 10 years into the future.
-        - **Heatmaps:** Visualize current and forecasted PM2.5 levels across Europe with interactive heatmaps, allowing users to see trends and patterns.
-
-
-        **Technology Stack:**
-        - **Data Processing and Analysis:** Python, Pandas, NumPy
-        - **Forecasting:** Prophet, a forecasting tool developed by Facebook
-        - **Visualization:** Folium, Matplotlib, Streamlit for web interface
-        - **Data Sources:** https://atmosphere.copernicus.eu/ads-now-contains-20-year-cams-global-reanalysis-eac4-dataset
-
-        **Team Members:**
-        - Eva López Puiggené
-        - Dimitrios Apatzidis
-        - Ilaria Gaiani
-        - Tawanda Sigauke
-        - Bruce Pereira
-
-
-        **Acknowledgements:**
-        We would like to thank our mentors and instructors at the Data Science Bootcamp for their guidance and support throughout this project.
-
-        **Future Work:**
-        - **Integration of Real-time Data:** Incorporating real-time air quality monitoring data to provide up-to-date forecasts.
-        - **Exploring daily data:** Exploring the performance of the model with daily data .
-        - **User Interface Enhancements:** Adding more interactive features and customization options for users.
-        """)
-
-    elif page == "About":
-        st.subheader('About the Project')
-        st.markdown("""
-        **Project Title:** Air Pollution Levels Forecast and Visualization
-
-        **Objective:**
-        This project aims to provide forecasts and visualizations of PM2.5 levels in various cities and regions across Europe. PM2.5 refers to fine particulate matter with a diameter of 2.5 micrometers or smaller, which can pose serious health risks when inhaled. By providing accurate forecasts and visual representations, we hope to inform and protect public health.
-
-        **Key Features:**
-        - **Forecast PM2.5 Levels:** Users can enter a city and country to receive a forecast of PM2.5 levels for up to 10 years into the future.
-        - **Heatmaps:** Visualize current and forecasted PM2.5 levels across Europe with interactive heatmaps, allowing users to see trends and patterns.
-
-
-        **Technology Stack:**
-        - **Data Processing and Analysis:** Python, Pandas, NumPy
-        - **Forecasting:** Prophet, a forecasting tool developed by Facebook
-        - **Visualization:** Folium, Matplotlib, Streamlit for web interface
-        - **Data Sources:** https://atmosphere.copernicus.eu/ads-now-contains-20-year-cams-global-reanalysis-eac4-dataset
-
-        **Team Members:**
-        - Eva López Puiggené
-        - Dimitrios Apatzidis
-        - Ilaria Gaiani
-        - Tawanda Sigauke
-        - Bruce Pereira
-
-
-        **Acknowledgements:**
-        We would like to thank our mentors and instructors at the Data Science Bootcamp for their guidance and support throughout this project.
-
-        **Future Work:**
-        - **Integration of Real-time Data:** Incorporating real-time air quality monitoring data to provide up-to-date forecasts.
-        - **Exploring daily data:** Exploring the performance of the model with daily data .
-        - **User Interface Enhancements:** Adding more interactive features and customization options for users.
-        """)
-
-if __name__ == '__main__':
+    if __name__ == '__main__':
     main()
