@@ -13,8 +13,8 @@ import requests
 import pickle
 from streamlit_navigation_bar import st_navbar
 
-#BASE_URL = 'https://airpollutionlevels-image-qgw4wjcfua-ew.a.run.app'
-BASE_URL = 'http://localhost:8000'
+BASE_URL = 'https://airpollutionlevels-image-qgw4wjcfua-ew.a.run.app'
+#BASE_URL = 'http://localhost:8000'
 
 def fetch_forecast_pm25(city_name, country_name, future_periods):
     try:
