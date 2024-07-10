@@ -3,3 +3,5 @@ requests
 folium
 streamlit_folium
 scipy
+streamlit_navigation_bar
+branca
