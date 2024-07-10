@@ -245,8 +245,10 @@ def main():
 
 
         # loading from file
-        heat_data = 'airpollutionlevels/interface/heat_data_onshore.txt'
-        time_index = 'airpollutionlevels/interface/time_index_onshore.txt'
+        with open("airpollutionlevels/interface/heat_data_onshore.txt", 'rb') as f:
+            heat_data = pickle.load(f)
+        with open("airpollutionlevels/interface/time_index_onshore.txt", 'rb') as f:
+            time_index = pickle.load(f)
 
 
         # Create a base map
