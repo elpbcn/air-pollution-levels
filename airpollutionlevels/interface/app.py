@@ -248,16 +248,12 @@ def main():
 
         url = 'https://raw.githubusercontent.com/elpbcn/air-pollution-levels/master/airpollutionlevels/interface/heat_data_onshore.txt'
         heat_data_file = requests.get(url)
-        with open('heat_data.txt', 'wb') as f:
-            f.write(heat_data_file.content)
         with open("heat_data_onshore.txt", 'rb') as f:
             heat_data = pickle.load(f)
 
 
         url = 'https://raw.githubusercontent.com/elpbcn/air-pollution-levels/master/airpollutionlevels/interface/time_index_onshore.txt'
         time_index_file = requests.get(url)
-        with open('time_index.txt', 'wb') as f:
-            f.write(time_index_file.content)
         with open("time_index_onshore.txt", 'rb') as f:
             time_index = pickle.load(f)
 
