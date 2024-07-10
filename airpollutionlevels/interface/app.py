@@ -95,12 +95,10 @@ def main():
 
 
     # Load and display logo
-    #logo = 'https://github.com/elpbcn/air-pollution-levels/blob/master/airpollutionlevels/interface/apl_logo.png'
-    #st.image(logo, width=700)
-    #st.markdown("---")
-    htp="https://github.com/elpbcn/air-pollution-levels/blob/master/airpollutionlevels/interface/apl_logo.png" 
-    st.image(htp, caption= 'logo', width=700)
-    
+    logo = './apl_logo.png'
+    st.image(logo, width=700)
+    st.markdown("---")
+        
 
     # Sidebar inputs
     with st.sidebar:
