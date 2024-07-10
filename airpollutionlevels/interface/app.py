@@ -328,5 +328,5 @@ def main():
         - **User Interface Enhancements:** Adding more interactive features and customization options for users.
         """)
 
-    if __name__ == '__main__':
+if __name__ == '__main__':
     main()
