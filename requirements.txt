@@ -27,3 +27,5 @@ python-dotenv==1.0.1
 gcsfs
 st-files-connection
 folium
+streamlit_folium
+streamlit_navigation_bar
