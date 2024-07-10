@@ -95,7 +95,7 @@ def main():
 
 
     # Load and display logo
-    logo = './apl_logo.png'
+    logo = 'airpollutionlevels/interface/apl_logo.png'
     st.image(logo, width=700)
     st.markdown("---")
         
