@@ -199,7 +199,8 @@ def main():
                 data=heat_data,
                 index=[time.strftime("%Y-%m-%d") for time in time_index],
                 gradient={0.167: '#36ac56', 0.333: '#9bd445', 0.5: '#f1d208', 0.667: '#ffbb02', 0.833: '#ff8b00', 1.0: '#ed0e06'},
-                radius=10,
+                radius=0.75,
+                blur=0.3,
                 scale_radius=True,
             ).add_to(m)
 
@@ -232,12 +233,12 @@ def main():
             }
             </style>
             <div class="legend">
-                <div><span style="background: #36ac56"></span>1</div>
-                <div><span style="background: #9bd445"></span>2</div>
-                <div><span style="background: #f1d208"></span>3</div>
-                <div><span style="background: #ffbb02"></span>4</div>
-                <div><span style="background: #ff8b00"></span>5</div>
-                <div><span style="background: #ed0e06"></span>6</div>
+                <div><span style="background: #36ac56"></span>1 - very good</div>
+                <div><span style="background: #9bd445"></span>2 - good</div>
+                <div><span style="background: #f1d208"></span>3 - medium</div>
+                <div><span style="background: #ffbb02"></span>4 - poor</div>
+                <div><span style="background: #ff8b00"></span>5 - very poor</div>
+                <div><span style="background: #ed0e06"></span>6 - extremely poor</div>
             </div>
             """, unsafe_allow_html=True)
 
